@@ -1,0 +1,17 @@
+name: Changes Pipeline
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+
+jobs:
+  identify-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Get Changed Files
+        run: |
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }}

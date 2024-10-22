@@ -10,6 +10,7 @@ if __name__ == "__main__":
     
     # Add arguments
     parser.add_argument('compare_branch', type=str, help='Branch the PR will be open to')
+    parser.add_argument('github_action', type=bool, help='Is it github actions?')
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
 
     # Parse the arguments

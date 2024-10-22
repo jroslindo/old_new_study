@@ -23,4 +23,8 @@ jobs:
           for file in ${ALL_FILES}; do
             echo "$file was added"
           done
+
+      - name: Run Python
+        run: python3.11 /mnt/extended/old_new_study github_action=True
+
             

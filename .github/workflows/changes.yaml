@@ -34,5 +34,9 @@ jobs:
       - name: Run analyze
         working-directory: /mnt/extended/old_new_study
         run: CodeChecker analyze ./compile_commands.json --output ./reports --config codechecker.json
+      
+      - name: Run parse
+        working-directory: /mnt/extended/old_new_study
+        run: CodeChecker parse --export json --output ./reports_json.json ./reports --config codechecker.json
 
             

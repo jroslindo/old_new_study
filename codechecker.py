@@ -5,6 +5,14 @@ CODECHECKER_TEXT = """
 {
 	"analyze": [
 		"--disable-all",
+        "--disable=alpha",
+        "--disable=bugprone",
+        "--disable=cert-err60-cpp",
+        "--disable=clang-diagnostic",
+        "--disable=google",
+        "--disable=performance",
+        "--disable=readability",
+		"--disable=cppcoreguidelines",
 		"--enable=bugprone-unchecked-optional-access",
 		"--jobs=10",
 		"--clean",

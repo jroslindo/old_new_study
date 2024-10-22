@@ -1,0 +1,13 @@
+
+{
+	"analyze": [
+		"--disable-all",
+		"--enable=bugprone-unchecked-optional-access",
+		"--jobs=10",
+		"--clean",
+		"--ignore=skipfiles"
+	],
+	"parse": [
+		"--ignore=skipfiles"
+	]
+}

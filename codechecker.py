@@ -9,8 +9,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Teste")
     
     # Add arguments
-    parser.add_argument('compare_branch', type=str, help='Branch the PR will be open to')
-    parser.add_argument('github_action', type=bool, help='Is it github actions?')
+    parser.add_argument('--github-action', type=bool, help='Is it github actions?', default=False, required=False)
+    parser.add_argument('--compare-branch', type=str, help='Branch the PR will be open to', default="", required=False)
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
 
     # Parse the arguments

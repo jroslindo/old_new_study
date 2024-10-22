@@ -38,5 +38,6 @@ jobs:
       - name: Run parse
         working-directory: /mnt/extended/old_new_study
         run: CodeChecker parse --export json --output ./reports_json.json ./reports --config codechecker.json
+        continue-on-error: true
 
             

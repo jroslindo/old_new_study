@@ -28,6 +28,6 @@ jobs:
         run: python3.11 /mnt/extended/old_new_study/codechecker.py --github_action=True --files="${{ steps.changed-files.outputs.all_changed_and_modified_files }}"
 
       - name: Run log
-        run: CodeChecker log --build "g++ boosted.cpp" --output ./compile_commands.json
+        run: CodeChecker log --build "g++ git_actions/boosted.cpp" --output ./compile_commands.json
 
             

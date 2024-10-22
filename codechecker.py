@@ -25,7 +25,7 @@ def execute_github_codechecker(files:str):
     files = [file for file in files if file.find(".cpp") > 0]
 
     #writing skipfiles
-    arq = open(f"{BASE_PATH}/skpifiles", "w")
+    arq = open(f"{BASE_PATH}/skipfiles", "w")
     for file in files:
         arq.write(f"+*/{file}\n")
     arq.write("-*/*\n")

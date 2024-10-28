@@ -25,7 +25,7 @@ jobs:
           done
 
       - name: Run Python
-        run: python3.11 /mnt/extended/old_new_study/codechecker.py --github_action=True --files="${{ steps.changed-files.outputs.all_changed_and_modified_files }}"
+        run: python3.11 /mnt/extended/old_new_study/codechecker.py --github_action --files="${{ steps.changed-files.outputs.all_changed_and_modified_files }}"
 
       - name: Run log
         working-directory: /mnt/extended/old_new_study

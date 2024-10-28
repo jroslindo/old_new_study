@@ -34,10 +34,10 @@ test_class::~test_class()
 //     // var = test_class();
 // }
 
-int main()
-{
+int main() 
+{  
     boost::optional<test_class> test = boost::none;
-    // PutSomeData(test);
+    // PutSomeData(test); 
 
     if (test.get().value_test == 0)
     {

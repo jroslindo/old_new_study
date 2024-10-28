@@ -40,4 +40,7 @@ jobs:
         run: CodeChecker parse --export json --output ./reports_json.json ./reports --config codechecker.json
         continue-on-error: true
 
+      - name: Publish review results
+        run: gh pr review 2 --request-changes --body "test"
+
             

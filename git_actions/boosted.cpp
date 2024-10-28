@@ -34,6 +34,8 @@ test_class::~test_class()
 //     // var = test_class();
 // }
 
+//test
+
 int main() 
 {  
     boost::optional<test_class> test = boost::none;

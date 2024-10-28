@@ -4,6 +4,7 @@ CodeChecker log --build "g++ -I/usr/include boosted.cpp -lboost_system -lboost_f
 
 #include <boost/optional/optional.hpp>
 #include <boost/none.hpp>
+#include <iostream>
 
 class test_class
 {
@@ -22,6 +23,10 @@ test_class::~test_class()
 {
 }
 
+void greetJoaoRoslindo() {
+    std::cout << "Hello Joao Roslindo" << std::endl;
+}
+
 // int test_class::get(){
 //     if (this->value_test.is_initialized())
 //         return this->value_test.get();
@@ -36,6 +41,8 @@ test_class::~test_class()
 
 int main() 
 {  
+    greetJoaoRoslindo();
+
     boost::optional<test_class> test = boost::none;
     // PutSomeData(test); 
 

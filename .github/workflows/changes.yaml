@@ -41,6 +41,6 @@ jobs:
         continue-on-error: true
 
       - name: Publish review results
-        run: gh pr review 2 --request-changes --body "test"
+        run: gh pr review ${{ github.event.pull_request.number }} --request-changes --body "test"
 
             

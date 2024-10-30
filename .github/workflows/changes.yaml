@@ -4,13 +4,14 @@ on:
   pull_request:
     types: [opened, edited, synchronize]
 
-
+permissions:
+  contents: write
 jobs:
   identify-changes:
     runs-on: self-hosted
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Run python
         run: python3.11 /mnt/extended/old_new_study/codechecker.py --github_action=${{ github.event.pull_request.number }} --analyze=${{ github.event.pull_request.base.ref }}

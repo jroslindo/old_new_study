@@ -53,7 +53,7 @@ def create_skipfiles_codechecker_config(files:list[str]):
         arq.write(f"+*/{file}\n")
     arq.write("-*/*\n")
     arq.close()
-
+ 
     
     if not os.path.isfile(f"{BASE_PATH}/codechecker.json"):
         arq = open(f"{BASE_PATH}/codechecker.json", "w")

@@ -169,7 +169,7 @@ def git_publish_reply(results:list[dict], git_pr_number:str):
         for bug in result.get("bug_path_events", []):
             file_path = bug.get("file", None).get("path",None)
             file_path = re.findall(".*?old_new_study/(git_actions/boosted\.cpp)",file_path)[0]
-            message_body += f"https://github.com/jroslindo/old_new_study/blob/{commit_hash}/{file_path}"
+            message_body += f"\nhttps://github.com/jroslindo/old_new_study/blob/{commit_hash}/{file_path}"
             if len(result.get("bug_path_events", [])) == 1:
                 message_body += "#L" + str(bug.get("line", ""))
         if len(results)>1:

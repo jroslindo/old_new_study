@@ -5,8 +5,8 @@ import os
 import sys
 import subprocess
 import json
+import re
 
-verbose = False
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 CODECHECKER_TEXT = """
 {
@@ -60,12 +60,6 @@ def create_skipfiles_codechecker_config(files:list[str]):
         arq.write(CODECHECKER_TEXT)
         arq.close()
 
-def execute_github_codechecker(files:str):
-    #splitting files and filtering for .cpp
-    files = files.split(" ")
-    files = [file for file in files if file.find(".cpp") > 0]
-    create_skipfiles_codechecker_config(files)
-
 def grep_different_files(branch:str)->list[str]|None:
     #Looking for differences into another branch
     try:
@@ -75,7 +69,7 @@ def grep_different_files(branch:str)->list[str]|None:
                 check=True,
                 text=True,  # Ensures output is returned as a string
                 capture_output=True,  # Capture standard output and error
-                cwd="../../../../"
+                #cwd="../../../../" #TODO: uncomment this
             )
         else:
             result = subprocess.run(
@@ -83,7 +77,7 @@ def grep_different_files(branch:str)->list[str]|None:
                 check=True,
                 text=True,  # Ensures output is returned as a string
                 capture_output=True,  # Capture standard output and error
-                cwd="../../../../"
+                #cwd="../../../../" #TODO: uncomment this
             )
         # Retrieve the output
         changed_files = result.stdout.strip().splitlines()
@@ -128,13 +122,13 @@ def read_skipfiles_from_txt():
     
     return ignores
 
-def evaluate_results()->bool:
+def evaluate_results()->list[dict]:
     """
-        Return True if there are bugs
+        Return the results if there are bugs
     """
-    if os.path.isfile(f"{BASE_PATH}/../../../../build/shell/fusionIV-debug/reports.json"):
+    if os.path.isfile(f"{BASE_PATH}/reports.json"): #/../../../../build/shell/fusionIV-debug
         try:
-            with open(f"{BASE_PATH}/../../../../build/shell/fusionIV-debug/reports.json", "r") as result_files:
+            with open(f"{BASE_PATH}/reports.json", "r") as result_files: #/../../../../build/shell/fusionIV-debug
                 results_json : dict = json.load(result_files)
         except:
             print("Problem checking results. Exiting...")
@@ -145,19 +139,73 @@ def evaluate_results()->bool:
     
     if len(results_json.get("reports", [])) == 0:
         print("No bugs found.")
-        return False
-    print("Bugs found!!!")
-    return True
+    
+    return results_json.get("reports", [])
+
+def last_commit_hash()->str:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            check=True,
+            text=True,  # Ensures output is returned as a string
+            capture_output=True  # Capture standard output and error
+        )
+        result = result.stdout.strip().splitlines()
+        return result[0]
+    except:
+        print("Git rev-parse error")
+        sys.exit()
 
 
-def analyze_single_PR(branch:str, force:bool):
-    global verbose
-    std_argument = subprocess.DEVNULL
-    if verbose:
-        std_argument = None
+def git_publish_reply(results:list[dict], git_pr_number:str):
+    commit_hash = last_commit_hash()
+    message_body :str = ""
 
-    #Generating makefiles
-    if force or not os.path.isdir(f"{BASE_PATH}/../../../fusion-web-services/generated-code/"):
+    results = [r for r in results if r.get("review_status","unreviewed") == "unreviewed"]
+
+    for result in results:
+        message_body += f"Checker: {result.get('checker_name')}\n"
+        message_body += f"message: {result.get('message')}\n"
+        for bug in result.get("bug_path_events", []):
+            file_path = bug.get("file", None).get("path",None)
+            file_path = re.findall(".*?old_new_study/(git_actions/boosted\.cpp)",file_path)[0]
+            message_body += f"https://github.com/jroslindo/old_new_study/blob/{commit_hash}/{file_path}"
+            if len(result.get("bug_path_events", [])) == 1:
+                message_body += "#L" + str(bug.get("line", ""))
+        if len(results)>1:
+            message_body += "\n***"
+    
+    try:
+        subprocess.run(
+            ["gh", "pr", "review", f"{git_pr_number}", "-r", "-b", str(message_body)]
+        )
+        print("review published")
+    except Exception as E:
+        print("Error publishing", E)
+        sys.exit()
+
+
+
+def check_args(args):
+    #Git action mode
+    if args.github_action == -1: #Local mode
+        if args.analyze != "":
+            print(f"Analyzing branch: {args.analyze}")
+        else:
+            print("Running analyzes with unstaged changes")
+
+        if args.force == True:
+            print("Will run the full setup, this may take a while.")
+
+def prerequisites(force : bool, std_argument):
+    """
+        This function will generate the files in the build process.
+        - ws_generate.sh
+        - run-typegen.sh
+        - gen_qmake.sh
+    """
+
+    if args.force: #or not os.path.isdir(f"{BASE_PATH}/../../../fusion-web-services/generated-code/"): #TODO: uncoment this for fusion
         print("Generating files.")
         commands = [
             ["sudo", f"{BASE_PATH}/../../../../build/shell/fusionIV-debug/ws_generate.sh"],
@@ -172,30 +220,19 @@ def analyze_single_PR(branch:str, force:bool):
                 print(f"Error executing command: {command}. Error: {e}")
                 print("finishing the application with error.")
                 sys.exit()
+    
 
-    #Detecting diff between branchs, creating skipfiles and codechecker.json - this needs a update
-    print("Finding differences")
-    changed_files = grep_different_files(branch)
-    filtered_files = filter_files(changed_files)
-
-    # Let's create our main files of CodeChecker
-    create_skipfiles_codechecker_config(filtered_files)
-
-    print("Changed files already filtered:")
-    for file in filtered_files:
-        print(f"-    {file}")
-    print()
-    input("press enter to continue or finish with ctrl+c:")
-
+def execute_codechecker(std_argument, git:bool):
     # Executing log, analyze and parse
     commands = []
-    if force or not os.path.isfile(f"{BASE_PATH}/../../../../build/shell/fusionIV-debug/compile_commands.json"): # Do we need to generate compile_commands?
+    if args.force: #or not os.path.isfile(f"{BASE_PATH}/../../../../build/shell/fusionIV-debug/compile_commands.json"): # Do we need to generate compile_commands? # TODO: remove comment
         print("Generating compile commands... This may take a while!")
-        commands.append(["sudo", "chmod", "-R", "777", f"{BASE_PATH}/../../../../"]),
-        commands.append(["sudo", "make", "clean"]),
-        commands.append(["CodeChecker", "log", "--build", f"make -j{os.cpu_count()-2}", "--output", "./compile_commands.json"])
+        # commands.append(["sudo", "chmod", "-R", "777", f"{BASE_PATH}/../../../../"]), #TODO: REMOVE COMMENT
+        # commands.append(["sudo", "make", "clean"]), #TODO: REMOVE COMMENT
+        commands.append(["CodeChecker", "log", "--build", f"g++ ./git_actions/boosted.cpp", "--output", "./compile_commands.json"]) #TODO: EDIT COMMAND
     commands.append(["CodeChecker","analyze","./compile_commands.json","--output","./reports","--config","codechecker.json"])
-    commands.append(["CodeChecker","parse","--export","html","--output","./reports_html","./reports","--config","codechecker.json"])
+    if not git:
+        commands.append(["CodeChecker","parse","--export","html","--output","./reports_html","./reports","--config","codechecker.json"])
     commands.append(["CodeChecker","parse","--export","json","--output","./reports.json","./reports","--config","codechecker.json"])
 
     for command in commands:
@@ -205,13 +242,13 @@ def analyze_single_PR(branch:str, force:bool):
                 print("Parsing...")
                 check = False
 
-            if command == commands[-3]:
-                print("Analyzing...")
+            # if command == commands[-3]:
+            #     print("Analyzing...")
 
             subprocess.run(
                 command, 
                 check=check,
-                cwd=f"{BASE_PATH}/../../../../build/shell/fusionIV-debug/",
+                #cwd=f"{BASE_PATH}/../../../../build/shell/fusionIV-debug/", #TODO: remove this
                 stdout=std_argument,  # Mute standard output
                 stderr=std_argument   # Mute standard error
             )
@@ -219,48 +256,58 @@ def analyze_single_PR(branch:str, force:bool):
             print(f"Error executing command: {command}. Error: {e}")
             print("finishing the application with error.")
             sys.exit()
-    
-    if evaluate_results():
-        print("Openning firefox to check results")
-        os.environ['MESA_GLTHREAD'] = 'false'
-        subprocess.Popen(
-            ["firefox", f"{BASE_PATH}/../../../../build/shell/fusionIV-debug/reports_html/statistics.html"]
-        )
-
-    print("ANALYIZES FINISHED")
-
-
-def check_args(args):
-    #Git action mode
-    if args.github_action:
-        if args.files == "":
-            print("For git action mode files is required.")
-            sys.exit()
-    else: #Local mode
-        if args.analyze != "":
-            print(f"Analyzing branch: {args.analyze}")
-        else:
-            print("Running analyzes with unstaged changes")
-
-        if args.force == True:
-            print("Will run the full setup, this may take a while.")
-
 
 def main(args):
     # Check if there's anything wrong if arguments
     check_args(args)
-    # Local or git?
-    if args.github_action and args.files !="":
-        execute_github_codechecker(args.files)
-    else:
-        analyze_single_PR(args.analyze, args.force)
+    
+    #shall we print
+    std_argument = subprocess.DEVNULL
+    if args.verbose:
+        std_argument = None
+
+    #Generating makefiles
+    # prerequisites(args.force, std_argument)    
+
+    #Detecting diff between branchs, creating skipfiles and codechecker.json - this needs a update
+    print("Finding differences")
+    changed_files = grep_different_files(args.analyze)
+    filtered_files = filter_files(changed_files)
+
+    # Let's create our main files of CodeChecker
+    create_skipfiles_codechecker_config(filtered_files)
+
+    if args.github_action == -1:
+        print("Changed files already filtered:")
+        for file in filtered_files:
+            print(f"-    {file}")
+        print()
+        input("press enter to continue or finish with ctrl+c:")
+
+    # Executing all codechecker part
+    execute_codechecker(std_argument, args.github_action != -1)
+    
+    results = evaluate_results()
+    if len(results)>0:
+        if args.github_action == -1:
+            print("Openning firefox to check results")
+            os.environ['MESA_GLTHREAD'] = 'false'
+            subprocess.Popen(
+                ["firefox", f"{BASE_PATH}/reports_html/statistics.html"] #/../../../../build/shell/fusionIV-debug
+            )
+        else:
+            git_publish_reply(results, args.github_action)
+
+
+    print("ANALYIZES FINISHED")
+    
 
 if __name__ == "__main__":
     # Create the parser
     parser = argparse.ArgumentParser(description= DESCRIPTION_HELP, formatter_class=argparse.RawTextHelpFormatter)
     
     # Add arguments
-    parser.add_argument('--github_action', type=bool, help='Is it github actions?', default=False, required=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--github_action', type=int, help='Do not use it', default=-1, required=False)
     parser.add_argument('--analyze', type=str, help='Branch the PR will be open to', default="", required=False)
     parser.add_argument('--files', type=str, help='Files to check', default="", required=False)
     parser.add_argument('--force', type=bool, help='Execute the full setup, good for first time', default=False, required=False, action=argparse.BooleanOptionalAction)
@@ -268,8 +315,6 @@ if __name__ == "__main__":
 
     # Parse the arguments
     args = parser.parse_args()
-    
-    verbose = args.verbose
-    
+        
     # Call the main function with the parsed arguments
     main(args)

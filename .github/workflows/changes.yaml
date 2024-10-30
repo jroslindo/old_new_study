@@ -10,7 +10,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Run python
         run: python3.11 /mnt/extended/old_new_study/codechecker.py --github_action=${{ github.event.pull_request.number }} --analyze=${{ github.event.pull_request.base.ref }}

@@ -11,9 +11,11 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-      - name: test
-        run: git diff --name-only main
+      - name: fetch origin
+        run: git fetch origin
 
       - name: Run python
         run: python3.11 /mnt/extended/old_new_study/codechecker.py --github_action=${{ github.event.pull_request.number }} --analyze=${{ github.event.pull_request.base.ref }}

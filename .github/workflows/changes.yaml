@@ -4,43 +4,15 @@ on:
   pull_request:
     types: [opened, edited, synchronize]
 
-
 jobs:
   identify-changes:
     runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Fetch all history
 
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v45.0.3
-
-      - name: List all added files
-        env:
-          ALL_FILES: ${{ steps.changed-files.outputs.all_changed_and_modified_files }}
+      - name: Run Python Script
         run: |
-          for file in ${ALL_FILES}; do
-            echo "$file was added"
-          done
-
-      - name: Run Python
-        run: python3.11 /mnt/extended/old_new_study/codechecker.py --github_action --files="${{ steps.changed-files.outputs.all_changed_and_modified_files }}"
-
-      - name: Run log
-        working-directory: /mnt/extended/old_new_study
-        run: CodeChecker log --build "g++ git_actions/boosted.cpp" --output ./compile_commands.json
-
-      - name: Run analyze
-        working-directory: /mnt/extended/old_new_study
-        run: CodeChecker analyze ./compile_commands.json --output ./reports --config codechecker.json
-      
-      - name: Run parse
-        working-directory: /mnt/extended/old_new_study
-        run: CodeChecker parse --export json --output ./reports_json.json ./reports --config codechecker.json
-        continue-on-error: true
-
-      - name: Publish review results
-        run: gh pr review 2 --request-changes --body "test"
-
-            
+          python3.11 /mnt/extended/old_new_study/codechecker.py --github_action=${{ github.event.pull_request.number }} --analyze=${{ github.event.pull_request.base.ref }}

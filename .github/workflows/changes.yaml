@@ -14,8 +14,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: fetch origin
-        run: git fetch origin
+      - name: Check for changes
+        run: |
+          git fetch origin  # Ensure the latest branches are fetched
+          git diff --name-only origin/main  # Compare with the main branch
 
       - name: fetch origin
         run: git diff --name-only main

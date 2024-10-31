@@ -17,7 +17,7 @@ jobs:
       - name: Check for changes
         run: |
           git fetch origin  # Ensure the latest branches are fetched
-          git diff --name-only origin/HEAD  # Compare with the main branch
+          git branch -r # Compare with the main branch
 
       - name: fetch origin
         run: git diff --name-only main

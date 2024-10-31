@@ -4,7 +4,6 @@ on:
   pull_request:
     types: [opened, edited, synchronize]
 
-
 jobs:
   identify-changes:
     runs-on: self-hosted
@@ -12,47 +11,28 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Fetch all history
 
-      - name: Check for changes
+      - name: Show Current Branch
+        run: git rev-parse --abbrev-ref HEAD
+
+      - name: Show Remote Branches
+        run: git branch -r
+
+      - name: Show Git Status
+        run: git status
+
+      - name: Fetch Latest Changes
         run: |
-          git fetch origin  # Ensure the latest branches are fetched
-          git branch -r # Compare with the main branch
+          git fetch origin
 
-      - name: fetch origin
-        run: git diff --name-only main
+      - name: Check for Changes
+        run: |
+          git diff --name-only HEAD origin/main  # Compare current branch with origin/main
 
-      # - name: Run python
-      #   run: python3.11 /mnt/extended/old_new_study/codechecker.py --github_action=${{ github.event.pull_request.number }} --analyze=${{ github.event.pull_request.base.ref }}
+      - name: Print Event Details
+        run: echo "${{ toJson(github.event) }}"
 
-      # - name: Run python git diff
-
-
-      # - name: List all added files
-      #   env:
-      #     ALL_FILES: ${{ steps.changed-files.outputs.all_changed_and_modified_files }}
+      # - name: Run Python Script
       #   run: |
-      #     for file in ${ALL_FILES}; do
-      #       echo "$file was added"
-      #     done
-
-      # - name: Run Python
-      #   run: python3.11 /mnt/extended/old_new_study/codechecker.py --github_action --files="${{ steps.changed-files.outputs.all_changed_and_modified_files }}"
-
-      # - name: Run log
-      #   working-directory: /mnt/extended/old_new_study
-      #   run: CodeChecker log --build "g++ git_actions/boosted.cpp" --output ./compile_commands.json
-
-      # - name: Run analyze
-      #   working-directory: /mnt/extended/old_new_study
-      #   run: CodeChecker analyze ./compile_commands.json --output ./reports --config codechecker.json
-      
-      # - name: Run parse
-      #   working-directory: /mnt/extended/old_new_study
-      #   run: CodeChecker parse --export json --output ./reports_json.json ./reports --config codechecker.json
-      #   continue-on-error: true
-
-      # - name: Publish review results
-      #   run: gh pr review ${{ github.event.pull_request.number }} --request-changes --body "test"
-
-            
+      #     python3.11 /mnt/extended/old_new_study/codechecker.py --github_action=${{ github.event.pull_request.number }} --analyze=${{ github.event.pull_request.base.ref }}

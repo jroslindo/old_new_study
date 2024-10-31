@@ -142,3 +142,13 @@ _actions/actions/checkout/v2/src/misc/licensed-check.sh
 _actions/actions/checkout/v2/src/misc/licensed-download.sh
 _actions/actions/checkout/v2/src/misc/licensed-generate.sh
 _PipelineMapping/jroslindo/old_new_study/PipelineFolder.json
+reports/boosted.cpp_clang-tidy_07c18f3b3b93a05443813b022b584c28.plist
+reports/fixit/boosted.cpp_clang-tidy_07c18f3b3b93a05443813b022b584c28.yaml
+reports_html/boosted.cpp_clang-tidy_07c18f3b3b93a05443813b022b584c28.plist.html
+reports_html/index.html
+reports_html/statistics.html
+codechecker.json
+ignores.txt
+reports.json
+codechecker.json
+codechecker.json

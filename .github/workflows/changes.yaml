@@ -13,26 +13,6 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history
 
-      - name: Show Current Branch
-        run: git rev-parse --abbrev-ref HEAD
-
-      - name: Show Remote Branches
-        run: git branch -r
-
-      - name: Show Git Status
-        run: git status
-
-      - name: Fetch Latest Changes
+      - name: Run Python Script
         run: |
-          git fetch origin
-
-      - name: Check for Changes
-        run: |
-          git diff --name-only HEAD origin/main  # Compare current branch with origin/main
-
-      - name: Print Event Details
-        run: echo "${{ toJson(github.event) }}"
-
-      # - name: Run Python Script
-      #   run: |
-      #     python3.11 /mnt/extended/old_new_study/codechecker.py --github_action=${{ github.event.pull_request.number }} --analyze=${{ github.event.pull_request.base.ref }}
+          python3.11 /mnt/extended/old_new_study/codechecker.py --github_action=${{ github.event.pull_request.number }} --analyze=${{ github.event.pull_request.base.ref }}

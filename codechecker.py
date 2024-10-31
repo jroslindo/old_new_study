@@ -65,7 +65,7 @@ def grep_different_files(branch:str)->list[str]|None:
     try:
         if branch != "":
             result = subprocess.run(
-                ["git", "diff", "--name-only", branch],
+                ["git", "diff", "--name-only", "HEAD", branch],
                 check=True,
                 text=True,  # Ensures output is returned as a string
                 capture_output=True,  # Capture standard output and error
